@@ -1,0 +1,36 @@
+import 'dart:developer';
+
+import 'package:dio/dio.dart';
+import 'package:riverpod/riverpod.dart';
+
+import '../../core/classes/passenger_class.dart';
+import '../../core/networking/network_manager.dart';
+
+/// List passengers for a specific date
+final passengersByDateProvider = FutureProvider.family<List<Passenger>, DateTime>((ref, date) async {
+  final nm = NetworkManager.instance;
+  // final res = await nm.get('/passengers', query: {'date': date.toIso8601String()});
+  final res = await nm.get('/passengers');
+  // Success path returns NetworkResponse; failures throw NetworkException by default.
+  final list = (res.data as List).cast<Map<String, dynamic>>();
+  return list.map((m) => Passenger.fromJson(m)).toList();
+});
+
+/// Single passenger details (id + date for cache key uniqueness)
+final passengerDetailsProvider = FutureProvider.autoDispose.family<Passenger, ({DateTime date, String passengerId})>((ref, key) async {
+  final cToken = CancelToken();
+  ref.onDispose(() => cToken.cancel('route popped'));
+  final nm = NetworkManager.instance;
+  // final res = await nm.get('/passengers/${key.passengerId}', query: {'date': key.date.toIso8601String()});
+  String api = '/passengers/${key.passengerId}';
+  // log(api);
+  try {
+    final res = await nm.get(api, cancelToken: cToken);
+    // log(res.toString());
+    final m = (res.data as Map<String, dynamic>);
+    return Passenger.fromJson(m);
+  } catch (e) {
+    log("$e");
+    rethrow;
+  }
+});
