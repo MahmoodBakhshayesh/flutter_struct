@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,14 +19,47 @@ DateTime? _parseDateQ(Map<String, String> q) {
   if (s == null) return null;
   final p = s.split('-');
   if (p.length != 3) return null;
-  try { return DateTime(int.parse(p[0]), int.parse(p[1]), int.parse(p[2])); }
-  catch (_) { return null; }
+  try {
+    return DateTime(int.parse(p[0]), int.parse(p[1]), int.parse(p[2]));
+  } catch (_) {
+    return null;
+  }
 }
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   // react to auth changes
   final loggedIn = ref.watch(isLoggedInProvider);
-
+  return GoRouter(
+    initialLocation: "/login",
+    routes: [
+      GoRoute(
+        path: "/login",
+        builder: (c, s) {
+          return LoginView();
+        },
+      ),
+      GoRoute(
+        path: "/passengers",
+        builder: (c, s) {
+          DateTime d = DateTime.parse(s.uri.queryParameters["date"]!)!;
+          log("passengers: ${s.uri.toString()}");
+          return PassengersView(date: d);
+        },
+        routes: [
+          GoRoute(
+            path: "passenger/:id",
+            builder: (c, s) {
+              DateTime d = DateTime.parse(s.uri.queryParameters["date"]!);
+              // String id = s.uri.queryParameters["id"]!;
+              String id = s.pathParameters["id"]!;
+              log("details ${s.uri.toString()}");
+              return PassengerDetailsView(date: d, passengerId: id);
+            },
+          ),
+        ],
+      ),
+    ],
+  );
   return GoRouter(
     initialLocation: '/login',
     navigatorKey: NavigationService.rootNavigatorKey,
@@ -33,14 +69,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       // If already going to /passengers/passenger-details, do NOT rewrite the path.
       final segs = state.uri.pathSegments;
-      final goingToDetails = segs.length >= 2 &&
-          segs[0] == 'passengers' &&
-          segs[1] == 'passenger-details';
+      final goingToDetails = segs.length >= 2 && segs[0] == 'passengers' && segs[1] == 'passenger-details';
 
       if (!qp.containsKey('date')) {
         final today = DateTime.now().toUtc().toIso8601String().split('T').first; // yyyy-MM-dd
         final newUri = Uri(
-          path: state.uri.path,                    // ✅ preserve /passengers[/passenger-details]
+          path: state.uri.path, // ✅ preserve /passengers[/passenger-details]
           queryParameters: {...qp, 'date': today}, // ✅ just add date
         );
         return goingToDetails ? newUri.toString() : newUri.toString();
@@ -48,16 +82,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
-      GoRoute(
-        path: '/login',
-        builder: (context, state) => const LoginView(),
-      ),
+      GoRoute(path: '/login', builder: (context, state) => const LoginView()),
       GoRoute(
         path: '/passengers',
         builder: (context, state) {
           // read date from query (?date=YYYY-MM-DD), default to today if missing
-          final date = state.uri.queryParameters['date'] ??
-              DateFormat('yyyy-MM-dd').format(DateTime.now());
+          final date = state.uri.queryParameters['date'] ?? DateFormat('yyyy-MM-dd').format(DateTime.now());
           return PassengersView(date: DateTime.now());
         },
         routes: [
@@ -81,7 +111,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
 class _InvalidRoute extends StatelessWidget {
   const _InvalidRoute();
+
   @override
-  Widget build(BuildContext context) =>
-      const Scaffold(body: Center(child: Text('Invalid or missing query parameters')));
+  Widget build(BuildContext context) => const Scaffold(body: Center(child: Text('Invalid or missing query parameters')));
 }

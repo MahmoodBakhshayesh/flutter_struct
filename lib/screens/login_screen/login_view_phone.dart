@@ -17,7 +17,8 @@ class LoginViewPhone extends ConsumerWidget {
           TextButton(
             onPressed: () {
               ref.read(authStateProvider.notifier).state = UserSession('u-1');
-              context.go(Routes.passengers);
+              final target = Uri(path: Routes.passengers, queryParameters: Routes.qDate(DateTime.now())).toString();
+              context.go(target.toString());
             },
             child: Text("Press"),
           ),
@@ -35,8 +36,8 @@ class LoginViewPhone extends ConsumerWidget {
               // ref.read(postLoginTargetProvider.notifier).state = target;
               //
               // // 3) log in — the redirect will immediately navigate to `target`
-              ref.read(authStateProvider.notifier).state = UserSession('u-1');
-              context.go("/passengers/passenger-details?date=2025-10-19&id=2");
+              // ref.read(authStateProvider.notifier).state = UserSession('u-1');
+              context.go("/passengers/passenger/${2}?date=2025-10-19");
             },
             child: Text("Go Pax 1"),
           ),

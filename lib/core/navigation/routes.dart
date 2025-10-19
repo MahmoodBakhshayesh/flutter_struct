@@ -9,6 +9,9 @@ class Routes {
         '${d.month.toString().padLeft(2, '0')}-'
         '${d.day.toString().padLeft(2, '0')}',
   };
+  static Map<String, String> qID(String d) => {
+    'id':d
+  };
 
   static Map<String, String> qPassenger(DateTime d, String id) =>
       {...qDate(d), 'id': id};

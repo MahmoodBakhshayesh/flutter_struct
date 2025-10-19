@@ -8,21 +8,28 @@ import '../../core/navigation/routes.dart';
 import 'passengers_provider.dart';
 import 'passengers_view_state.dart';
 
-class PassengersView extends ConsumerWidget {
+class PassengersView extends ConsumerStatefulWidget {
   final DateTime date;
 
   const PassengersView({super.key, required this.date});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(passengersListStateProvider(date));
-    final ctrl = ref.watch(passengersListControllerProvider(date));
+  ConsumerState<PassengersView> createState() => _PassengersViewState();
+}
 
-    final passengersAsync = ref.watch(passengersByDateProvider(date));
+class _PassengersViewState extends ConsumerState<PassengersView> {
+  @override
+  Widget build(BuildContext context) {
+    log("build list");
+
+    final state = ref.watch(passengersListStateProvider(widget.date));
+    final ctrl = ref.watch(passengersListControllerProvider(widget.date));
+
+    final passengersAsync = ref.watch(passengersByDateProvider(widget.date));
     // log("GoRouter.of(context).state.path ${GoRouter.of(context).state.uri}");
 
     return Scaffold(
-      appBar: AppBar(title: Text('Passengers • ${date.toIso8601String().split("T").first}')),
+      appBar: AppBar(title: Text('Passengers • ${widget.date.toIso8601String().split("T").first}')),
       body: passengersAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, st) => Center(child: Text('Error: $e')),
@@ -36,7 +43,13 @@ class PassengersView extends ConsumerWidget {
               return ListTile(
                 title: Text('${f.firstName} → ${f.lastName}'),
                 subtitle: Text('ID: ${f.id}'),
-                onTap: () => ctrl.goToDetails(passengerId: f.id),
+                // onTap: () => ctrl.goToDetails(passengerId: f.id),
+                onTap: (){
+                  final target = Uri(path: "/passengers/passenger/${f.id}",
+                      queryParameters: Routes.qDate(DateTime.now())).toString();
+                  context.go(target.toString());
+                  // context.push(target.toString());
+                },
               );
             },
           );

@@ -6,18 +6,24 @@ import 'package:go_router/go_router.dart';
 import '../passengers/passengers_provider.dart';
 import 'passenger_details_provider.dart';
 
-class PassengerDetailsView extends ConsumerWidget {
+class PassengerDetailsView extends ConsumerStatefulWidget {
   final DateTime date;
   final String passengerId;
   const PassengerDetailsView({super.key, required this.date, required this.passengerId});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final detailsAsync = ref.watch(passengerDetailsProvider((date: date, passengerId: passengerId)));
-    final controller = ref.watch(passengerDetailsControllerProvider(date));
+  ConsumerState<PassengerDetailsView> createState() => _PassengerDetailsViewState();
+}
+
+class _PassengerDetailsViewState extends ConsumerState<PassengerDetailsView> {
+  @override
+  Widget build(BuildContext context) {
+    log("build details");
+    final detailsAsync = ref.watch(passengerDetailsProvider((date: widget.date, passengerId: widget.passengerId)));
+    // final controller = ref.watch(passengerDetailsControllerProvider(date));
     // log("GoRouter.of(context).state.path ${GoRouter.of(context).state.uri}");
     return Scaffold(
-      appBar: AppBar(title: Text('Passenger $passengerId')),
+      appBar: AppBar(title: Text('Passenger ${widget.passengerId}')),
       body: detailsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, st) => Center(child: Text('Error: $e')),
@@ -25,7 +31,7 @@ class PassengerDetailsView extends ConsumerWidget {
           padding: const EdgeInsets.all(16),
           child: GestureDetector(
             onTap: (){
-              controller.pop();
+              // controller.pop();
             },
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
