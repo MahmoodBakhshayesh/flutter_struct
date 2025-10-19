@@ -1,7 +1,7 @@
 class Routes {
   static const login = '/login';
   static const passengers = '/passengers';             // list
-  static const passengerDetails = '/passenger-details';// details
+  static const passengerDetails = 'passenger-details';// details
 
   static Map<String, String> qDate(DateTime d) => {
     'date':

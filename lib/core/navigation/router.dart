@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:struct2/screens/login_screen/login_view.dart';
 import 'package:struct2/screens/passenger_details/passenger_details_view.dart';
 import 'package:struct2/screens/passengers/passengers_view.dart';
@@ -23,66 +24,56 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   final loggedIn = ref.watch(isLoggedInProvider);
 
   return GoRouter(
-    initialLocation: Routes.passengers,
+    initialLocation: '/login',
+    // refreshListenable: auth,
     redirect: (context, state) {
-      final loggedIn = ref.read(isLoggedInProvider);
-      final loggingIn = state.matchedLocation == Routes.login;
+      final qp = Map<String, String>.from(state.uri.queryParameters);
 
-      if (!loggedIn && !loggingIn) {
-        // preserve intended URL when unauthenticated
-        return Uri(path: Routes.login, queryParameters: {'from': state.uri.toString()}).toString();
+      // If already going to /passengers/passenger-details, do NOT rewrite the path.
+      final segs = state.uri.pathSegments;
+      final goingToDetails = segs.length >= 2 &&
+          segs[0] == 'passengers' &&
+          segs[1] == 'passenger-details';
+
+      if (!qp.containsKey('date')) {
+        final today = DateTime.now().toUtc().toIso8601String().split('T').first; // yyyy-MM-dd
+        final newUri = Uri(
+          path: state.uri.path,                    // ✅ preserve /passengers[/passenger-details]
+          queryParameters: {...qp, 'date': today}, // ✅ just add date
+        );
+        return goingToDetails ? newUri.toString() : newUri.toString();
       }
-
-      if (loggedIn && loggingIn) {
-        // priority: explicit post-login target > ?from=... > default
-        final override = ref.read(postLoginTargetProvider);
-        if (override != null && override.isNotEmpty) {
-          // clear one-shot target so it won't loop
-          ref.read(postLoginTargetProvider.notifier).state = null;
-          return override;
-        }
-        final from = state.uri.queryParameters['from'];
-        return from ?? Routes.passengers;
-      }
-
       return null;
     },
     routes: [
       GoRoute(
-        path: Routes.login,
-        name: 'login',
-        pageBuilder: (_, __) => const NoTransitionPage(child: LoginView()),
+        path: '/login',
+        builder: (context, state) => const LoginView(),
       ),
-      // /passengers?date=YYYY-MM-DD
       GoRoute(
-        path: Routes.passengers,
-        name: 'passengers',
-        pageBuilder: (context, state) {
-          final q = state.uri.queryParameters;
-          final date = _parseDateQ(q) ??
-              DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
-          return NoTransitionPage(child: PassengersView(date: date));
+        path: '/passengers',
+        builder: (context, state) {
+          // read date from query (?date=YYYY-MM-DD), default to today if missing
+          final date = state.uri.queryParameters['date'] ??
+              DateFormat('yyyy-MM-dd').format(DateTime.now());
+          return PassengersView(date: DateTime.now());
         },
-      ),
-      // /passenger-details?id=123&date=YYYY-MM-DD
-      GoRoute(
-        path: Routes.passengerDetails,
-        name: 'passengerDetails',
-        pageBuilder: (context, state) {
-          final q = state.uri.queryParameters;
-          final id = q['id'];
-          final date = _parseDateQ(q);
-          if (id == null || id.isEmpty || date == null) {
-            return const NoTransitionPage(child: _InvalidRoute());
-          }
-          return NoTransitionPage(child: PassengerDetailsView(date: date, passengerId: id,));
-        },
+        routes: [
+          GoRoute(
+            path: 'passenger-details',
+            builder: (context, state) {
+              final id = state.uri.queryParameters['id'];
+              final date = state.uri.queryParameters['date']; // pass date again
+              // if (id == null || date == null) {
+              //   return const _BadLinkScreen();
+              // }
+              // Parent (/passengers) still builds first because this is a nested route.
+              return PassengerDetailsView(date: DateTime.now(), passengerId: id!);
+            },
+          ),
+        ],
       ),
     ],
-    errorBuilder: (_, state) => Scaffold(
-      appBar: AppBar(title: const Text('Route Error')),
-      body: Center(child: Text(state.error?.toString() ?? 'Unknown route')),
-    ),
   );
 });
 

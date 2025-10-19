@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -12,6 +14,7 @@ class PassengersView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final passengersAsync = ref.watch(passengersByDateProvider(date));
+    // log("GoRouter.of(context).state.path ${GoRouter.of(context).state.uri}");
 
     return Scaffold(
       appBar: AppBar(title: Text('Passengers • ${date.toIso8601String().split("T").first}')),
@@ -30,7 +33,7 @@ class PassengersView extends ConsumerWidget {
                 subtitle: Text('ID: ${f.id}'),
                 onTap: () => context.push(
                   Uri(
-                    path: Routes.passengerDetails,
+                    path:   '/passengers/passenger-details',
                     queryParameters: Routes.qPassenger(date, f.id),
                   ).toString(),
 

@@ -1,5 +1,8 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../passengers/passengers_provider.dart';
 
 class PassengerDetailsView extends ConsumerWidget {
@@ -10,7 +13,7 @@ class PassengerDetailsView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final detailsAsync = ref.watch(passengerDetailsProvider((date: date, passengerId: passengerId)));
-
+    // log("GoRouter.of(context).state.path ${GoRouter.of(context).state.uri}");
     return Scaffold(
       appBar: AppBar(title: Text('Passenger $passengerId')),
       body: detailsAsync.when(

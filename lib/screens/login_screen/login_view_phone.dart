@@ -26,16 +26,17 @@ class LoginViewPhone extends ConsumerWidget {
               // 1) build your desired target
               final now = DateTime.now();
               final date = DateTime(now.year, now.month, now.day);
-              final target = Uri(
-                path: Routes.passengerDetails,
-                queryParameters: Routes.qPassenger(date, '1'),
-              ).toString();
-
-              // 2) stash it so the router redirect uses it
-              ref.read(postLoginTargetProvider.notifier).state = target;
-
-              // 3) log in — the redirect will immediately navigate to `target`
+              // final target = Uri(
+              //   path: Routes.passengerDetails,
+              //   queryParameters: Routes.qPassenger(date, '1'),
+              // ).toString();
+              //
+              // // 2) stash it so the router redirect uses it
+              // ref.read(postLoginTargetProvider.notifier).state = target;
+              //
+              // // 3) log in — the redirect will immediately navigate to `target`
               ref.read(authStateProvider.notifier).state = UserSession('u-1');
+              context.go("/passengers/passenger-details?date=2025-10-19&id=2");
             },
             child: Text("Go Pax 1"),
           ),
