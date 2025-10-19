@@ -22,7 +22,7 @@ extension HttpMethodName on HttpMethod {
 enum RetryPolicy { none, exponential }
 
 /// Logging levels for NetworkManager.
-enum LogLevel { none, basic, full }
+enum NetworkLogLevel { none, basic, full }
 
 typedef NetworkHook = void Function(NetworkRequest req, NetworkResponse res);
 typedef NetworkCheck = bool Function(NetworkRequest req, NetworkResponse res);
@@ -68,7 +68,7 @@ class NetworkManager {
   Duration receiveTimeout = const Duration(seconds: 25);
   Map<String, dynamic>? defaultHeaders;
   bool enableLogs = true;
-  LogLevel logLevel = LogLevel.basic;
+  NetworkLogLevel logLevel = NetworkLogLevel.basic;
   RetryPolicy retryPolicy = RetryPolicy.exponential;
   int maxRetries = 2;
 
@@ -101,7 +101,7 @@ class NetworkManager {
     Duration receiveTimeout = const Duration(seconds: 25),
     Map<String, dynamic>? headers,
     bool enableLogs = true,
-    LogLevel logLevel = LogLevel.basic,
+    NetworkLogLevel logLevel = NetworkLogLevel.basic,
     RetryPolicy retryPolicy = RetryPolicy.exponential,
     int maxRetries = 2,
     bool throwOnFailureGlobal = true, // default: throw on failures
@@ -155,31 +155,31 @@ class NetworkManager {
     mgr._dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) {
         final reqLogs = (options.extra['enableLogs'] as bool?) ?? mgr.enableLogs;
-        if (mgr.logLevel != LogLevel.none && reqLogs) {
-          if (mgr.logLevel == LogLevel.basic || mgr.logLevel == LogLevel.full) {
-            log.d('➡️ ${options.method} ${options.uri}');
+        if (mgr.logLevel != NetworkLogLevel.none && reqLogs) {
+          if (mgr.logLevel == NetworkLogLevel.basic || mgr.logLevel == NetworkLogLevel.full) {
+            appLog.d('➡️ ${options.method} ${options.uri}');
           }
-          if (mgr.logLevel == LogLevel.full && options.data != null) {
-            log.d('Headers: ${options.headers}');
-            log.d('Body: ${_short(options.data)}');
+          if (mgr.logLevel == NetworkLogLevel.full && options.data != null) {
+            appLog.d('Headers: ${options.headers}');
+            appLog.d('Body: ${_short(options.data)}');
           }
         }
         handler.next(options);
       },
       onResponse: (response, handler) {
         final reqLogs = (response.requestOptions.extra['enableLogs'] as bool?) ?? mgr.enableLogs;
-        if (mgr.logLevel != LogLevel.none && reqLogs) {
-          log.i('✅ ${response.statusCode} ${response.requestOptions.uri}');
-          if (mgr.logLevel == LogLevel.full) {
-            log.i('Resp: ${_short(response.data)}');
+        if (mgr.logLevel != NetworkLogLevel.none && reqLogs) {
+          appLog.i('✅ ${response.statusCode} ${response.requestOptions.uri}');
+          if (mgr.logLevel == NetworkLogLevel.full) {
+            appLog.i('Resp: ${_short(response.data)}');
           }
         }
         handler.next(response);
       },
       onError: (e, handler) {
         final reqLogs = (e.requestOptions.extra['enableLogs'] as bool?) ?? mgr.enableLogs;
-        if (mgr.logLevel != LogLevel.none && reqLogs) {
-          log.e('❌ ${e.message}', e, e.stackTrace);
+        if (mgr.logLevel != NetworkLogLevel.none && reqLogs) {
+          appLog.e('❌ ${e.message}', e, e.stackTrace);
         }
         handler.next(e);
       },
@@ -380,7 +380,7 @@ class NetworkManager {
         raw: e,
         duration: sw.elapsed,
       );
-      log.e('Download error', e, st);
+      appLog.e('Download error', e, st);
       onFailed?.call(req, res);
       onEnd?.call(req, res);
 
@@ -478,7 +478,7 @@ class NetworkManager {
         final res = _wrapError(req, e, sw.elapsed);
         onFailed?.call(req, res);
         onEnd?.call(req, res);
-        log.e('Request error', e, st);
+        appLog.e('Request error', e, st);
 
         if (shouldThrow) {
           throw NetworkException(
@@ -500,7 +500,7 @@ class NetworkManager {
         );
         onFailed?.call(req, res);
         onEnd?.call(req, res);
-        log.e('Unknown error', e, st);
+        appLog.e('Unknown error', e, st);
 
         if (shouldThrow) {
           throw NetworkException(

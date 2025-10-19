@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../passengers/passengers_provider.dart';
+import 'passenger_details_provider.dart';
 
 class PassengerDetailsView extends ConsumerWidget {
   final DateTime date;
@@ -13,6 +14,7 @@ class PassengerDetailsView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final detailsAsync = ref.watch(passengerDetailsProvider((date: date, passengerId: passengerId)));
+    final controller = ref.watch(passengerDetailsControllerProvider(date));
     // log("GoRouter.of(context).state.path ${GoRouter.of(context).state.uri}");
     return Scaffold(
       appBar: AppBar(title: Text('Passenger $passengerId')),
@@ -21,14 +23,19 @@ class PassengerDetailsView extends ConsumerWidget {
         error: (e, st) => Center(child: Text('Error: $e')),
         data: (f) => Padding(
           padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('${f.firstName} → ${f.lastName}', style: Theme.of(context).textTheme.headlineSmall),
-              const SizedBox(height: 8),
-              Text('Date: ${f.birthDate.toIso8601String()}'),
-              Text('ID: ${f.id}'),
-            ],
+          child: GestureDetector(
+            onTap: (){
+              controller.pop();
+            },
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('${f.firstName} → ${f.lastName}', style: Theme.of(context).textTheme.headlineSmall),
+                const SizedBox(height: 8),
+                Text('Date: ${f.birthDate.toIso8601String()}'),
+                Text('ID: ${f.id}'),
+              ],
+            ),
           ),
         ),
       ),

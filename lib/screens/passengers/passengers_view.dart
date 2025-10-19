@@ -6,13 +6,18 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/navigation/routes.dart';
 import 'passengers_provider.dart';
+import 'passengers_view_state.dart';
 
 class PassengersView extends ConsumerWidget {
   final DateTime date;
+
   const PassengersView({super.key, required this.date});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(passengersListStateProvider(date));
+    final ctrl = ref.watch(passengersListControllerProvider(date));
+
     final passengersAsync = ref.watch(passengersByDateProvider(date));
     // log("GoRouter.of(context).state.path ${GoRouter.of(context).state.uri}");
 
@@ -31,13 +36,7 @@ class PassengersView extends ConsumerWidget {
               return ListTile(
                 title: Text('${f.firstName} → ${f.lastName}'),
                 subtitle: Text('ID: ${f.id}'),
-                onTap: () => context.push(
-                  Uri(
-                    path:   '/passengers/passenger-details',
-                    queryParameters: Routes.qPassenger(date, f.id),
-                  ).toString(),
-
-                ),
+                onTap: () => ctrl.goToDetails(passengerId: f.id),
               );
             },
           );

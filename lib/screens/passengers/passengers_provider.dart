@@ -2,6 +2,8 @@ import 'dart:developer';
 
 import 'package:dio/dio.dart';
 import 'package:riverpod/riverpod.dart';
+import 'package:struct2/screens/passengers/passengers_controller.dart';
+import 'package:struct2/screens/passengers/passengers_view_state.dart';
 
 import '../../core/classes/passenger_class.dart';
 import '../../core/networking/network_manager.dart';
@@ -26,11 +28,20 @@ final passengerDetailsProvider = FutureProvider.autoDispose.family<Passenger, ({
   // log(api);
   try {
     final res = await nm.get(api, cancelToken: cToken);
-    // log(res.toString());
     final m = (res.data as Map<String, dynamic>);
     return Passenger.fromJson(m);
   } catch (e) {
     log("$e");
     rethrow;
   }
+});
+
+
+// Controller stays the same, but read from the new name
+final passengersListControllerProvider = Provider.autoDispose.family<PassengersController, DateTime>((ref, date) {
+  final notifier = ref.read(passengersListStateProvider(date).notifier);
+  final controller = PassengersController(ref, notifier, date);
+  ref.onDispose(controller.onDispose);
+  Future.microtask(controller.onInit);
+  return controller;
 });

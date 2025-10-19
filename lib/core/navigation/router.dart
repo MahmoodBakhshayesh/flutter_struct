@@ -6,6 +6,7 @@ import 'package:struct2/screens/login_screen/login_view.dart';
 import 'package:struct2/screens/passenger_details/passenger_details_view.dart';
 import 'package:struct2/screens/passengers/passengers_view.dart';
 import '../auth/auth_providers.dart';
+import 'navigation_service.dart';
 import 'routes.dart';
 
 // Screens
@@ -25,6 +26,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
   return GoRouter(
     initialLocation: '/login',
+    navigatorKey: NavigationService.rootNavigatorKey,
     // refreshListenable: auth,
     redirect: (context, state) {
       final qp = Map<String, String>.from(state.uri.queryParameters);

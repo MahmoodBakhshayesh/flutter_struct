@@ -10,14 +10,19 @@ final di = GetIt.instance;
 Future<void> configureDependenciesBase() async {
   // Logger (optional)
   if (!di.isRegistered<LoggerService>()) {
-    di.registerSingleton<LoggerService>(LoggerService());
+    di.registerSingleton<LoggerService>(appLog);
   }
+  appLog.configure(
+    level: LogLevel.debug,      // set to LogLevel.info in production
+    showTimestamp: true,
+    tag: 'MYAPP',
+  );
 
   await initNetworkManager(
     baseUrl: 'https://msapi.farateams.com/api',
     // from env/config
     enableLogs: true,
-    logLevel: LogLevel.full,
+    logLevel: NetworkLogLevel.full,
     maxRetries: 2,
 
     throwOnFailureGlobal: true, // default: throw NetworkException on failure
@@ -32,13 +37,13 @@ Future<void> configureDependenciesBase() async {
 
 /// 2) Initialize the NetworkManager separately
 /// Call this AFTER you know env/baseUrl or after user login flow if needed.
-Future<void> initNetworkManager({required String baseUrl, bool enableLogs = true, LogLevel logLevel = LogLevel.basic, int maxRetries = 2, bool throwOnFailureGlobal = true}) async {
+Future<void> initNetworkManager({required String baseUrl, bool enableLogs = true, NetworkLogLevel logLevel = NetworkLogLevel.basic, int maxRetries = 2, bool throwOnFailureGlobal = true}) async {
   // Only initialize once
   if (!di.isRegistered<NetworkManager>()) {
     await NetworkManager.initialize(
       baseUrl: baseUrl,
       enableLogs: enableLogs,
-      logLevel: logLevel,
+      // logLevel: logLevel,
       maxRetries: maxRetries,
       retryPolicy: RetryPolicy.exponential,
       throwOnFailureGlobal: throwOnFailureGlobal,
@@ -69,13 +74,13 @@ Future<void> initNetworkManager({required String baseUrl, bool enableLogs = true
       //       m['error'] == 'token_expired' ||
       //       m['code'] == 'TOKEN_EXPIRED';
       // },
-      onStart: (req) => log.d('Starting ${req.method.name} ${req.pathOrUrl}'),
-      onEnd: (req, res) => log.d('Finished in ${res.duration.inMilliseconds}ms'),
-      onSuccess: (req, res) => log.i('OK ${res.statusCode} ${req.pathOrUrl}'),
-      onFailed: (req, res) => log.w('Fail ${res.statusCode} ${req.pathOrUrl}: ${res.message}'),
+      onStart: (req) => appLog.d('Starting ${req.method.name} ${req.pathOrUrl}'),
+      onEnd: (req, res) => appLog.d('Finished in ${res.duration.inMilliseconds}ms'),
+      onSuccess: (req, res) => appLog.i('OK ${res.statusCode} ${req.pathOrUrl}'),
+      onFailed: (req, res) => appLog.w('Fail ${res.statusCode} ${req.pathOrUrl}: ${res.message}'),
       onTokenExpire: (req, res) {
         // Optionally trigger refresh/logout here
-        log.w('Token expired on ${req.pathOrUrl}');
+        appLog.w('Token expired on ${req.pathOrUrl}');
       },
     );
 
