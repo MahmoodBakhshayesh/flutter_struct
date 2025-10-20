@@ -31,6 +31,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   final loggedIn = ref.watch(isLoggedInProvider);
   return GoRouter(
     initialLocation: "/login",
+    navigatorKey: NavigationService.rootNavigatorKey,
     routes: [
       GoRoute(
         path: "/login",
@@ -42,7 +43,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: "/passengers",
         builder: (c, s) {
           DateTime d = DateTime.parse(s.uri.queryParameters["date"]!)!;
-          log("passengers: ${s.uri.toString()}");
           return PassengersView(date: d);
         },
         routes: [
@@ -52,7 +52,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               DateTime d = DateTime.parse(s.uri.queryParameters["date"]!);
               // String id = s.uri.queryParameters["id"]!;
               String id = s.pathParameters["id"]!;
-              log("details ${s.uri.toString()}");
               return PassengerDetailsView(date: d, passengerId: id);
             },
           ),

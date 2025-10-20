@@ -1,63 +1,55 @@
 import 'dart:developer';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:struct2/core/logger/logger_service.dart';
+import 'package:riverpod/riverpod.dart';
+import 'package:struct2/core/abstracts/base_result.dart';
+
 import '../../core/abstracts/base_controller.dart';
-import '../../core/classes/passenger_class.dart';
 import '../../core/navigation/routes.dart';
-import '../../core/networking/network_manager.dart';
+import 'passengers_repository.dart';
 import 'passengers_view_state.dart';
+import 'usecases/get_passengers_by_date_usecase.dart';
 
-/// Business logic for the Passengers List view.
-/// - Handles loading, refresh, and navigation to details.
-/// - No state is stored here; it updates the Notifier only.
 class PassengersController extends BaseController {
-  PassengersController(this.ref, this._notifier, this.date);
+  PassengersController({required this.ref, required this.viewState, required this.date});
 
-  final Ref ref;
-  final PassengersListNotifier _notifier;
+  final Ref ref; // for listens, if needed
+  final PassengersRepository repo = PassengersRepository(); // injected repo
+  final PassengersViewNotifier viewState; // injected view-state notifier
   final DateTime date;
 
   @override
   Future<void> onInit() async {
-    logW('onInit • date=$date');
+    logI('onInit · date=$date');
     await load();
   }
 
-  /// Fetch passengers for [date].
   Future<void> load() async {
     try {
-      _notifier.setLoading();
-
-      final nm = NetworkManager.instance;
-      final res = await nm.get('/passengers', query: {'date': date.toIso8601String()});
-
-      final list = (res.data as List).cast<Map<String, dynamic>>().map(Passenger.fromJson).toList();
-
-      _notifier.setData(list);
+      viewState.setLoading();
+      final response = await GetPassengersByDateUseCase(repo).call(GetPassengersByDateRequest(date));
+      // final GetPassengersByDateUseCase getPassengersByDateUseCase = GetPassengersByDateUseCase(repo);
+      // final response = await getPassengersByDateUseCase.call(GetPassengersByDateRequest(date));
+      response.onOk((ok) => viewState.setData(ok.passengers));
+      response.onErr((err) {
+        log("on err on err ${err.message}");
+      });
     } catch (e, st) {
       logE('load failed', e, st);
-      _notifier.setError(e.toString());
+      viewState.setError(e.toString());
       showSnack('Failed to load passengers');
     }
   }
 
-  /// Manual refresh (e.g., pull-to-refresh or retry).
   Future<void> refresh() => load();
 
-  /// Navigate to passenger details (nested under /passengers/detail using query params).
   void goToDetails({required String passengerId}) {
-    try {
-      final uri = Uri(path: "/passengers/passenger-details", queryParameters: Routes.qPassenger(date, passengerId)).toString();
-      push(uri); // or go(uri) if you want to replace
-    }catch(e){
-      log(e.toString());
-    }
+    final target = Uri(path: "/passengers/passenger/$passengerId", queryParameters: Routes.qDate(DateTime.now())).toString();
+    go(target.toString());
   }
 
   @override
   Future<void> onDispose() async {
-    logW('onDispose');
+    logI('onDispose');
     await super.onDispose();
   }
 }
