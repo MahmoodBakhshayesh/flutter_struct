@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:developer';
 
+import 'package:bot_toast/bot_toast.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,6 +32,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   final loggedIn = ref.watch(isLoggedInProvider);
   return GoRouter(
     initialLocation: "/login",
+    observers: [BotToastNavigatorObserver()],
     navigatorKey: NavigationService.rootNavigatorKey,
     routes: [
       GoRoute(
@@ -52,54 +54,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               DateTime d = DateTime.parse(s.uri.queryParameters["date"]!);
               // String id = s.uri.queryParameters["id"]!;
               String id = s.pathParameters["id"]!;
-              return PassengerDetailsView(date: d, passengerId: id);
-            },
-          ),
-        ],
-      ),
-    ],
-  );
-  return GoRouter(
-    initialLocation: '/login',
-    navigatorKey: NavigationService.rootNavigatorKey,
-    // refreshListenable: auth,
-    redirect: (context, state) {
-      final qp = Map<String, String>.from(state.uri.queryParameters);
-
-      // If already going to /passengers/passenger-details, do NOT rewrite the path.
-      final segs = state.uri.pathSegments;
-      final goingToDetails = segs.length >= 2 && segs[0] == 'passengers' && segs[1] == 'passenger-details';
-
-      if (!qp.containsKey('date')) {
-        final today = DateTime.now().toUtc().toIso8601String().split('T').first; // yyyy-MM-dd
-        final newUri = Uri(
-          path: state.uri.path, // ✅ preserve /passengers[/passenger-details]
-          queryParameters: {...qp, 'date': today}, // ✅ just add date
-        );
-        return goingToDetails ? newUri.toString() : newUri.toString();
-      }
-      return null;
-    },
-    routes: [
-      GoRoute(path: '/login', builder: (context, state) => const LoginView()),
-      GoRoute(
-        path: '/passengers',
-        builder: (context, state) {
-          // read date from query (?date=YYYY-MM-DD), default to today if missing
-          final date = state.uri.queryParameters['date'] ?? DateFormat('yyyy-MM-dd').format(DateTime.now());
-          return PassengersView(date: DateTime.now());
-        },
-        routes: [
-          GoRoute(
-            path: 'passenger-details',
-            builder: (context, state) {
-              final id = state.uri.queryParameters['id'];
-              final date = state.uri.queryParameters['date']; // pass date again
-              // if (id == null || date == null) {
-              //   return const _BadLinkScreen();
-              // }
-              // Parent (/passengers) still builds first because this is a nested route.
-              return PassengerDetailsView(date: DateTime.now(), passengerId: id!);
+              return PassengerDetailsView(date: d, id: id);
             },
           ),
         ],

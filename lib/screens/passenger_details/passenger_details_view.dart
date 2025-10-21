@@ -1,50 +1,17 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import '../passengers/passengers_provider.dart';
-import 'passenger_details_provider.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:struct2/screens/passenger_details/passenger_details_controller.dart';
+import 'package:struct2/screens/passenger_details/passenger_details_provider.dart';
+import 'package:struct2/screens/passenger_details/passenger_details_view_phone.dart';
 
-class PassengerDetailsView extends ConsumerStatefulWidget {
+class PassengerDetailsView extends ConsumerWidget {
   final DateTime date;
-  final String passengerId;
-  const PassengerDetailsView({super.key, required this.date, required this.passengerId});
+  final String id;
+  const PassengerDetailsView({super.key, required this.id, required this.date});
 
   @override
-  ConsumerState<PassengerDetailsView> createState() => _PassengerDetailsViewState();
-}
-
-class _PassengerDetailsViewState extends ConsumerState<PassengerDetailsView> {
-  @override
-  Widget build(BuildContext context) {
-    log("build details");
-    final detailsAsync = ref.watch(passengerDetailsProvider((date: widget.date, passengerId: widget.passengerId)));
-    // final controller = ref.watch(passengerDetailsControllerProvider(date));
-    // log("GoRouter.of(context).state.path ${GoRouter.of(context).state.uri}");
-    return Scaffold(
-      appBar: AppBar(title: Text('Passenger ${widget.passengerId}')),
-      body: detailsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, st) => Center(child: Text('Error: $e')),
-        data: (f) => Padding(
-          padding: const EdgeInsets.all(16),
-          child: GestureDetector(
-            onTap: (){
-              // controller.pop();
-            },
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('${f.firstName} → ${f.lastName}', style: Theme.of(context).textTheme.headlineSmall),
-                const SizedBox(height: 8),
-                Text('Date: ${f.birthDate.toIso8601String()}'),
-                Text('ID: ${f.id}'),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
+  Widget build(BuildContext context,WidgetRef ref) {
+    final PassengerDetailsController myPassengersController = ref.watch(passengerDetailsControllerProvider((id,date)));
+    return PassengerDetailsViewPhone(myPassengersController, date: date,passengerId: id,);
   }
 }

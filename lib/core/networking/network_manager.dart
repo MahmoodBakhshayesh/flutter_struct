@@ -61,6 +61,8 @@ class NetworkManager {
 
   late final Dio _dio;
   bool _initialized = false;
+  bool exposeUrlInUi = false;
+  bool includeQueryParamsInUi = false;
 
   // Global settings
   String baseUrl = '';
@@ -114,6 +116,8 @@ class NetworkManager {
     NetworkCheck? failedCheck,
     NetworkCheck? tokenExpireCheck,
     NetworkMessageExtractor? messageExtractor,
+    bool exposeUrlInUi = false,
+    bool includeQueryParamsInUi = false,
   }) async {
     final mgr = instance;
     if (mgr._initialized) return;
@@ -127,7 +131,8 @@ class NetworkManager {
     mgr.retryPolicy = retryPolicy;
     mgr.maxRetries = maxRetries;
     mgr.throwOnFailureGlobal = throwOnFailureGlobal;
-
+    mgr.exposeUrlInUi = exposeUrlInUi;
+    mgr.includeQueryParamsInUi = includeQueryParamsInUi;
     mgr.onStart = onStart;
     mgr.onEnd = onEnd;
     mgr.onSuccess = onSuccess;

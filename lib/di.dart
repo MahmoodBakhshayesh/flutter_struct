@@ -1,4 +1,6 @@
 import 'package:get_it/get_it.dart';
+import 'core/abstracts/base_failure.dart';
+import 'core/abstracts/base_result.dart';
 import 'core/logger/logger_service.dart';
 import 'core/networking/network_manager.dart';
 
@@ -44,6 +46,7 @@ Future<void> initNetworkManager({required String baseUrl, bool enableLogs = true
       baseUrl: baseUrl,
       enableLogs: enableLogs,
       // logLevel: logLevel,
+      exposeUrlInUi: true,
       maxRetries: maxRetries,
       retryPolicy: RetryPolicy.exponential,
       throwOnFailureGlobal: throwOnFailureGlobal,
@@ -77,7 +80,20 @@ Future<void> initNetworkManager({required String baseUrl, bool enableLogs = true
       onStart: (req) => appLog.d('Starting ${req.method.name} ${req.pathOrUrl}'),
       onEnd: (req, res) => appLog.d('Finished in ${res.duration.inMilliseconds}ms'),
       onSuccess: (req, res) => appLog.i('OK ${res.statusCode} ${req.pathOrUrl}'),
-      onFailed: (req, res) => appLog.w('Fail ${res.statusCode} ${req.pathOrUrl}: ${res.message}'),
+      onFailed: (req, res) {
+        appLog.w('Fail ${res.statusCode} ${req.pathOrUrl}: ${res.message}');
+        final fail = NetworkFailure.fromResponse(
+          method: req.method.name,
+          url: _resolveUrl(NetworkManager.instance.baseUrl, req.pathOrUrl),
+          code: res.statusCode,
+          message: res.message ?? 'Request failed',
+          duration: res.duration,
+        );
+        FailureBus.I.emit(FailureNotice(
+          failure: fail,
+          severity: _severityFromCode(res.statusCode),
+        ));
+      },
       onTokenExpire: (req, res) {
         // Optionally trigger refresh/logout here
         appLog.w('Token expired on ${req.pathOrUrl}');
@@ -98,3 +114,15 @@ void clearAuthToken() => di<NetworkManager>().clearToken();
 
 /// For tests/hot restarts
 Future<void> resetDi() async => di.reset();
+
+String _resolveUrl(String base, String pathOrUrl) {
+  // If pathOrUrl is absolute, return it; else join with base
+  if (pathOrUrl.startsWith('http')) return pathOrUrl;
+  return Uri.parse(base).resolve(pathOrUrl).toString();
+}
+
+FailureSeverity _severityFromCode(int? code) {
+  if (code == 401 || code == 403) return FailureSeverity.critical;
+  if (code != null && code >= 500) return FailureSeverity.error;
+  return FailureSeverity.warning;
+}

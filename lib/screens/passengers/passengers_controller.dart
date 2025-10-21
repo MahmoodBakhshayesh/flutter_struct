@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:riverpod/riverpod.dart';
+import 'package:struct2/core/abstracts/base_failure.dart';
 import 'package:struct2/core/abstracts/base_result.dart';
 
 import '../../core/abstracts/base_controller.dart';
@@ -27,11 +28,9 @@ class PassengersController extends BaseController {
     try {
       viewState.setLoading();
       final response = await GetPassengersByDateUseCase(repo).call(GetPassengersByDateRequest(date));
-      // final GetPassengersByDateUseCase getPassengersByDateUseCase = GetPassengersByDateUseCase(repo);
-      // final response = await getPassengersByDateUseCase.call(GetPassengersByDateRequest(date));
       response.onOk((ok) => viewState.setData(ok.passengers));
       response.onErr((err) {
-        log("on err on err ${err.message}");
+          FailureBus.I.emit(FailureNotice(failure: err));
       });
     } catch (e, st) {
       logE('load failed', e, st);
