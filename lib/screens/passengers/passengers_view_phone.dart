@@ -20,7 +20,17 @@ class PassengersViewPhone extends ConsumerWidget {
     final passengersAsync = ref.watch(passengersByDateProvider(date));
 
     return Scaffold(
-      appBar: AppBar(title: Text('Passengers • ${date.toIso8601String().split("T").first}')),
+      appBar: AppBar(
+        actions: [
+          IconButton(
+            onPressed: () {
+              ref.invalidate(passengersByDateProvider(date),asReload: true);
+            },
+            icon: Icon(Icons.refresh),
+          ),
+        ],
+        title: Text('Passengers • ${date.toIso8601String().split("T").first}'),
+      ),
       body: passengersAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, st) => Center(child: Text('Error: $e')),

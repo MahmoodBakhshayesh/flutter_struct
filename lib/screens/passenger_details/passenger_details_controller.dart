@@ -28,12 +28,14 @@ class PassengerDetailsController extends BaseController {
 
   @override
   Future<void> onInit() async {
+    super.onInit();
     logW('onInit • date=$date');
     await load();
   }
 
   /// Fetch passengers for [date].
   Future<void> load() async {
+    viewStateNotifier.setLoading();
     final response = await GetPassengerDetailsByIdUseCase(repo).call(GetPassengerDetailsByIDRequest(id: id, date: date));
     response.onOk((ok) => viewStateNotifier.setData(ok.passenger));
     response.onErr((err) => FailureBus.I.emit(FailureNotice(failure: err)));

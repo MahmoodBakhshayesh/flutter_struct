@@ -149,8 +149,9 @@ abstract class BaseController {
 
   /// Show a modal bottom sheet.
   Future<T?> showBottomSheet<T>(
-      WidgetBuilder builder, {
+      Widget bottomSheet, {
         bool isScrollControlled = false,
+        bool isDismissible = false,
         bool useSafeArea = true,
         RouteSettings? settings,
       }) async {
@@ -160,7 +161,8 @@ abstract class BaseController {
       context: ctx,
       isScrollControlled: isScrollControlled,
       useSafeArea: useSafeArea,
-      builder: builder,
+      isDismissible:isDismissible ,
+      builder: (c)=>bottomSheet,
       routeSettings: settings,
     );
   }

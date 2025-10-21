@@ -27,11 +27,24 @@ DateTime? _parseDateQ(Map<String, String> q) {
   }
 }
 
+
+
 final appRouterProvider = Provider<GoRouter>((ref) {
   // react to auth changes
   final loggedIn = ref.watch(isLoggedInProvider);
   return GoRouter(
     initialLocation: "/login",
+    refreshListenable: GoRouterRefreshStream(
+      ref.watch(authStateProvider.notifier).stream, // only if you expose a stream
+    ),
+    redirect: (context, state) {
+      final loggingIn = state.matchedLocation == '/login';
+
+      if (!loggedIn && !loggingIn) return '/login';
+      if (loggedIn && loggingIn) return '/passengers';
+
+      return null;
+    },
     observers: [BotToastNavigatorObserver()],
     navigatorKey: NavigationService.rootNavigatorKey,
     routes: [
@@ -44,7 +57,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: "/passengers",
         builder: (c, s) {
-          DateTime d = DateTime.parse(s.uri.queryParameters["date"]!)!;
+          DateTime d = DateTime.tryParse(s.uri.queryParameters["date"]??'')??DateTime.now();
           return PassengersView(date: d);
         },
         routes: [
